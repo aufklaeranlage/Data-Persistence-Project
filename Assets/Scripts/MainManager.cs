@@ -23,10 +23,12 @@ public class MainManager : MonoBehaviour
 
     public TextMeshProUGUI MenuHighScoresText;
     public static List<int> highScores = new List<int>();
+    private static int highScoresMaxLength = 9;
+    private int highScorePosition;
     public static List<string> highScoreNames = new List<string>();
     
     private bool m_Started = false;
-    private int m_Points;
+    public int m_Points;
     
     private bool m_GameOver = false;
 
@@ -106,6 +108,7 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        CheckHighScores();
     }
 
     public void StartGame()
@@ -117,9 +120,64 @@ public class MainManager : MonoBehaviour
         
     }
 
+    void CheckHighScores()
+    {
+        if(highScores.Count == 0)
+        {
+            AdjustHighScores();
+        }
+        else
+        {
+            highScorePosition = highScores.Count;
+            foreach(int score in highScores)
+            {
+                if( score < m_Points)
+                {
+                highScorePosition--;
+                }
+            }
+            AdjustHighScores();
+        }
+    }
+
+    void AdjustHighScores()
+    {
+        if(highScores.Count == 0 || highScorePosition > highScores.Count)
+        {
+            highScores.Add(m_Points);
+            highScoreNames.Add(playerName);
+        }
+        // Wenn der Score höher als ein HighScore is und die Maximale Länge von HighScores noch nicht erreicht ist
+        // der niedrigste HighScore wird hinzugefügt und alle anderen unter der neuen highscoreposition verschoben
+        else if(highScorePosition < highScores.Count)
+        {
+            // dupliziert den letzten wert der Liste wenn noch Platz in der Liste ist
+            if(highScores.Count < highScoresMaxLength)
+            {
+                highScores.Add(highScores[highScores.Count-1]);
+                highScoreNames.Add(highScoreNames[highScoreNames.Count-1]);
+            }
+            for(int position = highScores.Count - 1; position > highScorePosition; position--)
+            {
+                highScores[position] = highScores[position - 1];
+                highScoreNames[position] = highScoreNames[position - 1];
+            }
+            highScores[highScorePosition] = m_Points;
+            highScoreNames[highScorePosition] = playerName;
+        }
+        // Wenn der Score niedriger als alle HighScores sind und noich platz im Array ist wird er geaddet
+        else if(highScorePosition >= highScores.Count && highScores.Count < highScoresMaxLength)
+        {
+            highScores.Add(m_Points);
+            highScoreNames.Add(playerName);
+        }
+        MenuHighScores();
+    }
+
     void MenuHighScores()
     {
         MenuHighScoresText = GameObject.FindWithTag("Menu High Score Text").GetComponent<TextMeshProUGUI>();
+        MenuHighScoresText.text = "";
         for(int i = 0; i < highScoreNames.Count; i++) 
         {
             MenuHighScoresText.text += highScoreNames[i] + ": " + highScores[i] + "\n";
